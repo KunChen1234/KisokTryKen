@@ -13,13 +13,9 @@ var life = new EventEmitter();
  	console.log('给'+who+'做饭');
  }) ;//on('事件名字'， 回调方法
 
-<<<<<<< HEAD
-life.off('please', read);
-=======
 life.on('please',function(who){
  	console.log('给'+who+'洗衣服');
 }) ;//on('事件名字'， 回调方法
->>>>>>> 7ba327d63ae0e62bcf86b0d002a0cfd51db5b48a
 
 
 life.on('lalala',function(who){
