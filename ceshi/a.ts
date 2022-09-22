@@ -8,7 +8,7 @@ function read(who:String) {
 life.on('please', read)
 // life.emit('please', ' 我 ');
 
-life.removeListener('please', read);
+life.off('please', read);
 
 
 life.emit('please', ' 我 ');

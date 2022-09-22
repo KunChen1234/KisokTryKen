@@ -48,8 +48,8 @@ async function command(port: SerialPort, command: String, dataParser: DelimiterP
         dataParser.once("data", (data: Buffer) => {
             // console.log(data.toString())
             resolve(data.toString())
-
         })
+       
     })
 }
 
@@ -67,18 +67,11 @@ async function main() {
             //await command(port, "041107\r", dataParser);
             // port.write('041007\r')
             // port.write("041107\r");
-            let data = await command(port, '050010\r', dataParser)
-            if (data === "0000") {
-                dataParser.removeAllListeners();
-            }
-            else
-            {
-                console.log(data);
-                dataParser.removeAllListeners();
-            }
+            let data = await command(port, '050010\r', dataParser);
+            console.log(data)
             //await command(port, "041207\r", dataParser);
             // port.write("041207\r");
-            console.log(data)
+
 
         }
 
