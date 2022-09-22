@@ -41,52 +41,55 @@ async function OpenPort(COMpath: string): Promise<any | SerialPort | null> {
         resolve(port)
     })
 }
-async function command(port: SerialPort, command: String, dataParser: DelimiterParser): Promise<String> {
-    const dataParser1 = port.pipe(new DelimiterParser({ delimiter: "\r", includeDelimiter: false }));
+async function command(port: SerialPort, command: String, dataParser: DelimiterParser): Promise<Buffer> {
     port.write(command)
     return new Promise((resolve) => {
         dataParser.once("data", (data: Buffer) => {
             // console.log(data.toString())
-            resolve(data.toString())
-
+            resolve(data)
         })
     })
 }
-
+async function EncodeBufferToTag(data: Buffer) {
+    if (data.subarray(0, 4).toString() === "0000") {
+        console.log("No card")
+    }
+    else if (data && Buffer.isBuffer(data) && data.subarray(0, 4).toString() === "0001" && data.length > 4) {
+        // asyncRead(data);
+        console.log(data)
+        console.log(data.toString())
+        console.log("Get card infor")
+    }
+    else {
+        console.log("scan failed")
+    }
+}
 async function main() {
     const internalEvents = new EventEmitter
     const { result, path } = await FindCOM()
     if (result) {
         let port = await OpenPort(path)
-        const dataParser = port.pipe(new DelimiterParser({ delimiter: "\r", includeDelimiter: false }));
         // port.write('041007\r')//init LED
         // port.write('041107\r')//LED ON
         // port.write('041207\r')//LED OFF
         let runLoop = true
+        port.on("open", async () => {
+            internalEvents.on("shutdown", () => {
+                runLoop = false;
+            })
+        });
+        const dataParser = port.pipe(new DelimiterParser({ delimiter: "\r", includeDelimiter: false }));
         while (runLoop) {
-            //await command(port, "041107\r", dataParser);
-            // port.write('041007\r')
-            // port.write("041107\r");
             let data = await command(port, '050010\r', dataParser)
-            if (data === "0000") {
-                dataParser.removeAllListeners();
-            }
-            else
-            {
-                console.log(data);
-                dataParser.removeAllListeners();
-            }
-            //await command(port, "041207\r", dataParser);
-            // port.write("041207\r");
-            console.log(data)
-
+            EncodeBufferToTag(data)
+            dataParser.removeAllListeners();
         }
-
     }
     else {
         console.log("Connect to scanner please")
     }
 }
+
 function isRoobuckTag(obj: unknown): obj is RoobuckTag {
     if (obj && typeof obj === "object") {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -99,9 +102,44 @@ function isRoobuckTag(obj: unknown): obj is RoobuckTag {
     }
 }
 
-// async function scanTag(comPort: SerialPort, dataParser: DelimiterParser):Promise<{ result: boolean, tagId: string | null }> {
+// async function asyncRead(data: Buffer) {
+//     console.log("Buffer isBuffer: " + Buffer.isBuffer(data))
+//     console.log("data: " + data)
+//     console.log("data length: " + data.length)
+//     console.log("data first four: " + data.subarray(0, 4).toString())
+//     if (data && Buffer.isBuffer(data) && data.subarray(0, 4).toString() === "0001" && data.length > 4) {
+//         const converted = Buffer.from(data.toString(), "hex");
+//         const start = converted.toString().indexOf("{");
+//         const end = converted.toString().lastIndexOf("}");
+//         const strCon = converted.subarray(start, end + 1).toString("utf8").replace(/\0/g, "");
+//         console.log("converted: " + converted.toString())
+//         console.log("start: " + start)
+//         console.log("end: " + end)
+//         let dataObj: RoobuckTag | null = null;
+//         console.log(converted.toString())
+//         try{
+//             dataObj=JSON.parse()
+//         }catch(err)
+//         {
+//             console.log(err)
+//         }
+//         // try {
 
+//         //     // return JSON.parse(strCon);
+//         // } catch (err) {
+//         //     // await command(port, "0407646006E3000400\r", dataParser); // Short high Beep
+//         //     // await command(port, "0407646004F401F401\r", dataParser); // long low Beep
+//         //     // await command(port, "041207\r", dataParser);
+//         //     console.log(err);
+//         // }
+//     } else {
+//         // await command(port, "0407646006E3000400\r", dataParser); // Short high Beep
+//         // await command(port, "0407646004F401F401\r", dataParser); // long low Beep
+//         // await command(port, "041207\r", dataParser);
+//         console.log("Failed to Read Tag data");
+//     }
 // }
+
 // async function asyncRead(comPort: SerialPort, dataParser: DelimiterParser): Promise<[string, unknown]> {
 // 	await command(comPort, "041007\r", dataParser);
 // 	await command(comPort, "041101\r", dataParser);
