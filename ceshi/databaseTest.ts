@@ -1,24 +1,24 @@
 import { PrismaClient } from '@prisma/client'
+import { Decipher } from 'crypto'
+import { resolve } from 'path'
+import { send } from 'process'
 
 const prisma = new PrismaClient()
 
-async function main() {
-  // const users = await prisma.user.findMany(
-  //   {
-  //     where:{
-  //       id=1
-  //     }
-  //   }
-  // // )
+async function FindById():Promise<any>{
+  const users = await prisma.user.findMany()
   // console.log(users)
+  return new Promise((resolve)=>
+  {
+    resolve (users)
+  })
 }
 
-main()
-  .then(async () => {
-    await prisma.$disconnect()
+
+async function sendData(data:any):Promise<any> {
+  return new Promise((resolve)=>
+  {
+    resolve(data)
   })
-  .catch(async (e) => {
-    console.error(e)
-    await prisma.$disconnect()
-    process.exit(1)
-  })
+}
+export default FindById;
