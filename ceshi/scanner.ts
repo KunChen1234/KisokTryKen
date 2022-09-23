@@ -1,25 +1,40 @@
 import { SerialPort } from "serialport";
 import { DelimiterParser } from '@serialport/parser-delimiter'
 import { EventEmitter } from "node:events";
+import{readTag} from "@roobuck-rnd/nfc_tools";
+import {parser} from "@roobuck-rnd/nfc_tools"
 interface RoobuckTag {
     MAC: string;
     SN: string;
+}
+function isRoobuckTag(obj: unknown): obj is RoobuckTag {
+    if (obj && typeof obj === "object") {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const parse = obj as Record<string, any>;
+        return parse && typeof parse === "object" && !Array.isArray(parse) &&
+            parse.MAC && typeof parse.MAC === "string" && parse.SN &&
+            typeof parse.SN === "string";
+    } else {
+        return false;
+    }
 }
 async function FindCOM(): Promise<{ result: boolean, path: string }> {
 
     return new Promise(async (resolve) => {
         let ports = await SerialPort.list();
-        let findcom = false;
-        let COM = "";
+        const port=ports.filter(port=>{
+            return port.vendorId=="09D8"
+        })
+        const COM=port[0].path
         // console.log(ports)
-        for (const element of ports) {
-            if (element.vendorId === "09D8") {
-                // console.log("find")
-                findcom = true
-                COM = element.path
-            }
-        }
-        if (findcom) {
+        // for (const element of ports) {
+        //     if (element.vendorId === "09D8") {
+        //         console.log("find")
+        //         findcom = true
+        //         COM = element.path
+        //     }
+        // }
+        if (port) {
             resolve({ result: true, path: COM })
         }
         else {
@@ -69,38 +84,30 @@ async function main() {
     const { result, path } = await FindCOM()
     if (result) {
         let port = await OpenPort(path)
-        // port.write('041007\r')//init LED
-        // port.write('041107\r')//LED ON
-        // port.write('041207\r')//LED OFF
         let runLoop = true
-        port.on("open", async () => {
-            internalEvents.on("shutdown", () => {
-                runLoop = false;
-            })
-        });
+        // port.on("open", async () => {
+        //     internalEvents.on("shutdown", () => {
+        //         runLoop = false;
+        //     })
+        // });
         const dataParser = port.pipe(new DelimiterParser({ delimiter: "\r", includeDelimiter: false }));
         while (runLoop) {
             let data = await command(port, '050010\r', dataParser)
-            EncodeBufferToTag(data)
+            console.log(data)
+            const tagData = await readTag(port,dataParser);
+            console.log(tagData);
             dataParser.removeAllListeners();
         }
     }
     else {
         console.log("Connect to scanner please")
     }
+   
+ 
+
 }
 
-function isRoobuckTag(obj: unknown): obj is RoobuckTag {
-    if (obj && typeof obj === "object") {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const parse = obj as Record<string, any>;
-        return parse && typeof parse === "object" && !Array.isArray(parse) &&
-            parse.MAC && typeof parse.MAC === "string" && parse.SN &&
-            typeof parse.SN === "string";
-    } else {
-        return false;
-    }
-}
+
 
 // async function asyncRead(data: Buffer) {
 //     console.log("Buffer isBuffer: " + Buffer.isBuffer(data))
