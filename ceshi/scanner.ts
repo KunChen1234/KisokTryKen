@@ -1,3 +1,4 @@
+//Interface of NFC
 import { SerialPort } from "serialport";
 import { DelimiterParser } from '@serialport/parser-delimiter'
 import { EventEmitter } from "node:events";
